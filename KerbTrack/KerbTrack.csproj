@@ -47,7 +47,7 @@
     <StartWorkingDirectory>$(ReferencePath)</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>xcopy /Y $(TargetDir)$(TargetName).* $(SolutionDir)GameData\$(ProjectName)\$(TargetName).*</PostBuildEvent>
+    <PostBuildEvent Condition="$([MSBuild]::IsOsPlatform('Windows'))">xcopy /Y $(TargetDir)$(TargetName).* $(SolutionDir)GameData\$(ProjectName)\$(TargetName).*</PostBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
