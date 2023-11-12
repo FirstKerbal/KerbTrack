@@ -300,9 +300,9 @@ namespace KerbTrack
         [KSPField]
         public static float pitchScaleFlight = 0.01f;
         [KSPField]
-        public static float yawScaleFlight = 0.01f;
+        public static float yawScaleFlight = (float)Math.PI / 180f;
         [KSPField]
-        public static float pitchScaleMap = 0.01f;
+        public static float pitchScaleMap = (float)Math.PI / 180f;
         [KSPField]
         public static float yawScaleMap = 0.01f;
 
@@ -422,8 +422,8 @@ namespace KerbTrack
                                     }
                                     else
                                     {
-                                        FlightCamera.fetch.camHdg = -(float)Math.PI * yaw / 180f;
-                                        FlightCamera.fetch.camPitch = -(float)Math.PI * pitch / 180f;
+                                        FlightCamera.fetch.camHdg = -yaw * yawScaleFlight;
+                                        FlightCamera.fetch.camPitch = -pitch * pitchScaleFlight;
                                     }
                                     //FlightCamera.fetch.transform.localPosition = new Vector3(xp, yp, zp);
                                     // Without setting the flight camera transform, the pod rotates about without changing the background.
