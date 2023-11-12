@@ -1,4 +1,4 @@
-﻿/*
+/*
  * InternalCamera:
  * Rotation X+ = rotate head down to feet.
  * Rotation Y+ = rotate head right
@@ -6,8 +6,8 @@
  * Translation X+ = Right
  * Translation Y+ = Up
  * Translation Z+ = Away
- * 
- * FlightCamera: 
+ *
+ * FlightCamera:
  * Pitch: Looking down in positive, looking up is negative
  * Heading: From above, rotating the craft anti-clockwise is positive, clockwise is negative.
  */
@@ -422,13 +422,8 @@ namespace KerbTrack
                                     }
                                     else
                                     {
-                                        pv = pitch * pitchScaleIVA + pitchOffsetIVA;
-                                        yv = yaw * yawScaleIVA + yawOffsetIVA;
-                                        rv = roll * rollScaleIVA + rollOffsetIVA;
-                                        xp = x * xScale + xOffset;
-                                        yp = y * yScale + yOffset;
-                                        zp = z * -zScale + zOffset;
-                                        FlightCamera.fetch.transform.localEulerAngles = new Vector3(-pv, -yv, rv);
+                                        FlightCamera.fetch.camHdg = -(float)Math.PI * yaw / 180f;
+                                        FlightCamera.fetch.camPitch = -(float)Math.PI * pitch / 180f;
                                     }
                                     //FlightCamera.fetch.transform.localPosition = new Vector3(xp, yp, zp);
                                     // Without setting the flight camera transform, the pod rotates about without changing the background.
