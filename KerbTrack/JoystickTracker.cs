@@ -8,7 +8,7 @@ namespace KerbTrack
 {
     public class JoystickTracker : ITracker
     {
-        public JoystickTracker()
+		public JoystickTracker()
         {
             Debug.Log("[KerbTrack] Initialising Joystick tracker...");
             string[] joysticks = Input.GetJoystickNames();
@@ -21,65 +21,69 @@ namespace KerbTrack
 
         public void GetData(ref Vector3 rot, ref Vector3 pos)
         {
-            if (KerbTrack.joyPitchAxisId != -1)
+            KerbTrack kerbTrack = KerbTrack.Instance;
+
+            if (kerbTrack.joyPitchAxisId != -1)
             {
-                string pitchAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyPitchAxisId;
+                string pitchAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyPitchAxisId;
                 rot.x = Input.GetAxis(pitchAxis) * 200;
-                if (KerbTrack.joyPitchInverted)
+                if (kerbTrack.joyPitchInverted)
                     rot.x *= -1;
             }
-            if (KerbTrack.joyYawAxisId != -1)
+            if (kerbTrack.joyYawAxisId != -1)
             {
-                string yawAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyYawAxisId;
+                string yawAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyYawAxisId;
                 rot.y = Input.GetAxis(yawAxis) * 200;
-                if (KerbTrack.joyYawInverted)
+                if (kerbTrack.joyYawInverted)
                     rot.y *= -1;
             }
-            if (KerbTrack.joyRollAxisId != -1)
+            if (kerbTrack.joyRollAxisId != -1)
             {
-                string rollAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyRollAxisId;
+                string rollAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyRollAxisId;
                 rot.z = Input.GetAxis(rollAxis) * 200;
-                if (KerbTrack.joyRollInverted)
+                if (kerbTrack.joyRollInverted)
                     rot.z *= -1;
             }
-            if (KerbTrack.joyXAxisId != -1)
+            if (kerbTrack.joyXAxisId != -1)
             {
-                string xAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyXAxisId;
+                string xAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyXAxisId;
                 pos.x = Input.GetAxis(xAxis);
-                if (KerbTrack.joyXInverted)
+                if (kerbTrack.joyXInverted)
                     pos.x *= -1;
             }
-            if (KerbTrack.joyYAxisId != -1)
+            if (kerbTrack.joyYAxisId != -1)
             {
-                string yAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyYAxisId;
+                string yAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyYAxisId;
                 pos.y = Input.GetAxis(yAxis);
-                if (KerbTrack.joyYInverted)
+                if (kerbTrack.joyYInverted)
                     pos.y *= -1;
             }
-            if (KerbTrack.joyZAxisId != -1)
+            if (kerbTrack.joyZAxisId != -1)
             {
-                string zAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyZAxisId;
+                string zAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyZAxisId;
                 pos.z = Input.GetAxis(zAxis);
-                if (KerbTrack.joyZInverted)
+                if (kerbTrack.joyZInverted)
                     pos.z *= -1;
             }
         }
 
         public void GetFlightCamData(ref Vector2 rot)
         {
-            if (KerbTrack.joyCamPitchAxisId != -1)
+			KerbTrack kerbTrack = KerbTrack.Instance;
+
+			if (kerbTrack.joyCamPitchAxisId != -1)
             {
-                string pitchAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyCamPitchAxisId;
+                string pitchAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyCamPitchAxisId;
                 rot.x = Deadzone(Input.GetAxis(pitchAxis)) * 200;
 
-                if (KerbTrack.joyCamPitchInverted)
+                if (kerbTrack.joyCamPitchInverted)
                     rot.x *= -1;
             }
-            if (KerbTrack.joyCamOrbitAxisId != -1)
+            if (kerbTrack.joyCamOrbitAxisId != -1)
             {
-                string orbitAxis = "joy" + KerbTrack.joystickId + "." + KerbTrack.joyCamOrbitAxisId;
+                string orbitAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyCamOrbitAxisId;
                 rot.y = Deadzone(Input.GetAxis(orbitAxis)) * 200;
-                if (KerbTrack.joyCamOrbitInverted)
+                if (kerbTrack.joyCamOrbitInverted)
                     rot.y *= -1;
             }
         }

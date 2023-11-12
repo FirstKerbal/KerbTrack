@@ -6,19 +6,19 @@ using UnityEngine;
 
 namespace KerbTrack
 {
-    public static class KerbTrackGui
+    partial class KerbTrack
     {
-        public static bool guiVisible = false;
-        private static Rect windowPos = new Rect(Screen.width / 4, Screen.height / 4, 10f, 10f);
-        private static string[] trackerNames = Enum.GetNames(typeof(Enums.Trackers));
+        public bool guiVisible = false;
+        private Rect windowPos = new Rect(Screen.width / 4, Screen.height / 4, 10f, 10f);
+        private string[] trackerNames = Enum.GetNames(typeof(Enums.Trackers));
         public const int MaxAxisNum = 19;
 
-        private static void MainGUI(int windowID)
+        private void MainGUI(int windowID)
         {
             GUILayout.BeginVertical();
 
-            string statusText = (KerbTrack.trackerEnabled ? "Enabled" : "Disabled") +
-                " (" + Enum.GetName(KerbTrack.toggleEnabledKey.GetType(), KerbTrack.toggleEnabledKey) + ")";
+            string statusText = (trackerEnabled ? "Enabled" : "Disabled") +
+                " (" + toggleEnabledKey + ")";
             GUILayout.Label(statusText);
 
             //if (activeTracker == (int)Trackers.Joystick)
@@ -70,7 +70,7 @@ namespace KerbTrack
             GUI.DragWindow();
         }
 
-        public static void OnGUI(int instanceId)
+        public void OnGUI(int instanceId)
         {
             if (guiVisible)
             {
@@ -79,83 +79,83 @@ namespace KerbTrack
             }
         }
 
-        private static bool _showIvaGui = false;
-        private static void IvaGui()
+        private bool _showIvaGui = false;
+        private void IvaGui()
         {
-            if (KerbTrack.tracker is IQuatTracker)
+            if (tracker is IQuatTracker)
             {
                 GUILayout.Label("This tracker's rotation cannot be adjusted.");
             }
             else
             {
-                GuiUtils.LabelValue("IVA Pitch", KerbTrack.pv);
-                GuiUtils.LabelValue("IVA Yaw", KerbTrack.yv);
-                GuiUtils.LabelValue("IVA Roll", KerbTrack.rv);
+                GuiUtils.LabelValue("IVA Pitch", pv);
+                GuiUtils.LabelValue("IVA Yaw", yv);
+                GuiUtils.LabelValue("IVA Roll", rv);
 
                 GUILayout.Label("<b>Scale</b>");
-                GuiUtils.SliderScale("IVA Pitch", ref KerbTrack.pitchScaleIVA);
-                GuiUtils.SliderScale("IVA Yaw", ref KerbTrack.yawScaleIVA);
-                GuiUtils.SliderScale("IVA Roll", ref KerbTrack.rollScaleIVA);
+                GuiUtils.SliderScale("IVA Pitch", ref pitchScaleIVA);
+                GuiUtils.SliderScale("IVA Yaw", ref yawScaleIVA);
+                GuiUtils.SliderScale("IVA Roll", ref rollScaleIVA);
 
                 GUILayout.Label("<b>Offset</b>");
-                GuiUtils.SliderOffset("IVA Pitch", ref KerbTrack.pitchOffsetIVA);
-                GuiUtils.SliderOffset("IVA Yaw", ref KerbTrack.yawOffsetIVA);
-                GuiUtils.SliderOffset("IVA Roll", ref KerbTrack.rollOffsetIVA);
+                GuiUtils.SliderOffset("IVA Pitch", ref pitchOffsetIVA);
+                GuiUtils.SliderOffset("IVA Yaw", ref yawOffsetIVA);
+                GuiUtils.SliderOffset("IVA Roll", ref rollOffsetIVA);
             }
 
-            GuiUtils.LabelValue("IVA Left-Right", KerbTrack.xp);
-            GuiUtils.LabelValue("IVA Up-Down", KerbTrack.yp);
-            GuiUtils.LabelValue("IVA In-Out", KerbTrack.zp);
+            GuiUtils.LabelValue("IVA Left-Right", xp);
+            GuiUtils.LabelValue("IVA Up-Down", yp);
+            GuiUtils.LabelValue("IVA In-Out", zp);
 
             GUILayout.Label("<b>Scale</b>");
-            GuiUtils.SliderScale("Left/Right (X)", ref KerbTrack.xScale);
-            GuiUtils.SliderScale("Up/Down (Y)", ref KerbTrack.yScale);
-            GuiUtils.SliderScale("In/Out (Z)", ref KerbTrack.zScale);
+            GuiUtils.SliderScale("Left/Right (X)", ref xScale);
+            GuiUtils.SliderScale("Up/Down (Y)", ref yScale);
+            GuiUtils.SliderScale("In/Out (Z)", ref zScale);
 
             GUILayout.Label("<b>Offset</b>");
-            GuiUtils.Slider("Left/Right (X)", ref KerbTrack.xOffset, KerbTrack.xMinIVA, KerbTrack.xMaxIVA);
-            GuiUtils.Slider("Up/Down (Y)", ref KerbTrack.yOffset, KerbTrack.yMinIVA, KerbTrack.yMaxIVA);
-            GuiUtils.Slider("In/Out (Z)", ref KerbTrack.zOffset, KerbTrack.zMinIVA, KerbTrack.zMaxIVA);
+            GuiUtils.Slider("Left/Right (X)", ref xOffset, xMinIVA, xMaxIVA);
+            GuiUtils.Slider("Up/Down (Y)", ref yOffset, yMinIVA, yMaxIVA);
+            GuiUtils.Slider("In/Out (Z)", ref zOffset, zMinIVA, zMaxIVA);
         }
 
-        private static bool _showFlightGui = false;
-        private static void FlightGui()
+        private bool _showFlightGui = false;
+        private void FlightGui()
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Flight Pitch");
-            GUILayout.Label(KerbTrack.pv.ToString());
+            GUILayout.Label(pv.ToString());
             GUILayout.EndHorizontal();
-            GUILayout.Label(KerbTrack.pitchScaleFlight.ToString());
-            KerbTrack.pitchScaleFlight = GUILayout.HorizontalSlider(KerbTrack.pitchScaleFlight, 0, 1);
+            GUILayout.Label(pitchScaleFlight.ToString());
+            pitchScaleFlight = GUILayout.HorizontalSlider(pitchScaleFlight, 0, 1);
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Flight Yaw");
-            GUILayout.Label(KerbTrack.yv.ToString());
+            GUILayout.Label(yv.ToString());
             GUILayout.EndHorizontal();
-            GUILayout.Label(KerbTrack.yawScaleFlight.ToString());
-            KerbTrack.yawScaleFlight = GUILayout.HorizontalSlider(KerbTrack.yawScaleFlight, 0, 1);
+            GUILayout.Label(yawScaleFlight.ToString());
+            yawScaleFlight = GUILayout.HorizontalSlider(yawScaleFlight, 0, 1);
         }
 
-        private static bool _showMapGui = false;
-        private static void MapGui()
+        private bool _showMapGui = false;
+        private void MapGui()
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label("Map Pitch");
-            GUILayout.Label(KerbTrack.pv.ToString());
+            GUILayout.Label(pv.ToString());
             GUILayout.EndHorizontal();
-            GUILayout.Label(KerbTrack.pitchScaleMap.ToString());
-            KerbTrack.pitchScaleMap = GUILayout.HorizontalSlider(KerbTrack.pitchScaleMap, 0, 1);
+            GUILayout.Label(pitchScaleMap.ToString());
+            pitchScaleMap = GUILayout.HorizontalSlider(pitchScaleMap, 0, 1);
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("Map Yaw");
-            GUILayout.Label(KerbTrack.yv.ToString());
+            GUILayout.Label(yv.ToString());
             GUILayout.EndHorizontal();
-            GUILayout.Label(KerbTrack.yawScaleMap.ToString());
-            KerbTrack.yawScaleMap = GUILayout.HorizontalSlider(KerbTrack.yawScaleMap, 0, 1);
+            GUILayout.Label(yawScaleMap.ToString());
+            yawScaleMap = GUILayout.HorizontalSlider(yawScaleMap, 0, 1);
         }
 
-        private static bool _showJoystickGui = false;
-        private static void JoystickGui()
+        private bool _showJoystickGui = false;
+        private void JoystickGui()
         {
             string[] joysticks = Input.GetJoystickNames();
             if (joysticks.Length == 0)
@@ -165,33 +165,33 @@ namespace KerbTrack
             }
 
             // Joystick selection.
-            if (KerbTrack.joystickId >= joysticks.Length)
-                KerbTrack.joystickId = 0;
+            if (joystickId >= joysticks.Length)
+                joystickId = 0;
             GUILayout.Label("Active joystick");
-            GUILayout.Label(KerbTrack.joystickId + " - " + joysticks[KerbTrack.joystickId]);
+            GUILayout.Label(joystickId + " - " + joysticks[joystickId]);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Previous joystick"))
-                KerbTrack.joystickId--;
+                joystickId--;
             if (GUILayout.Button("Next joystick"))
-                KerbTrack.joystickId++;
+                joystickId++;
             GUILayout.EndHorizontal();
-            if (KerbTrack.joystickId >= joysticks.Length)
-                KerbTrack.joystickId = 0;
-            if (KerbTrack.joystickId < 0)
-                KerbTrack.joystickId = joysticks.Length - 1;
+            if (joystickId >= joysticks.Length)
+                joystickId = 0;
+            if (joystickId < 0)
+                joystickId = joysticks.Length - 1;
             GUILayout.Space(10);
 
-            SelectAxis(ref KerbTrack.joyYawAxisId, ref KerbTrack.joyYawInverted, "Yaw");
-            SelectAxis(ref KerbTrack.joyPitchAxisId, ref KerbTrack.joyPitchInverted, "Pitch");
-            SelectAxis(ref KerbTrack.joyRollAxisId, ref KerbTrack.joyRollInverted, "Roll");
-            SelectAxis(ref KerbTrack.joyXAxisId, ref KerbTrack.joyXInverted, "X");
-            SelectAxis(ref KerbTrack.joyYAxisId, ref KerbTrack.joyYInverted, "Y");
-            SelectAxis(ref KerbTrack.joyZAxisId, ref KerbTrack.joyZInverted, "Z");
-            SelectAxis(ref KerbTrack.joyCamOrbitAxisId, ref KerbTrack.joyCamOrbitInverted, "Flight Camera Orbit");
-            SelectAxis(ref KerbTrack.joyCamPitchAxisId, ref KerbTrack.joyCamPitchInverted, "Flight Camera Pitch");
+            SelectAxis(ref joyYawAxisId, ref joyYawInverted, "Yaw");
+            SelectAxis(ref joyPitchAxisId, ref joyPitchInverted, "Pitch");
+            SelectAxis(ref joyRollAxisId, ref joyRollInverted, "Roll");
+            SelectAxis(ref joyXAxisId, ref joyXInverted, "X");
+            SelectAxis(ref joyYAxisId, ref joyYInverted, "Y");
+            SelectAxis(ref joyZAxisId, ref joyZInverted, "Z");
+            SelectAxis(ref joyCamOrbitAxisId, ref joyCamOrbitInverted, "Flight Camera Orbit");
+            SelectAxis(ref joyCamPitchAxisId, ref joyCamPitchInverted, "Flight Camera Pitch");
         }
 
-        private static void SelectAxis(ref int axisId, ref bool axisInverted, string axisName)
+        private void SelectAxis(ref int axisId, ref bool axisInverted, string axisName)
         {
             string label = axisId == -1 ? "Disabled" : axisId.ToString();
             GuiUtils.LabelValue(axisName + " axis", label);
@@ -209,19 +209,18 @@ namespace KerbTrack
                 axisId = MaxAxisNum;
         }
 
-        private static bool _showSettingsGui = false;
-        private static void SettingsGui()
+        private bool _showSettingsGui = false;
+        private void SettingsGui()
         {
-            KerbTrack.mapTrackingEnabled = GUILayout.Toggle(KerbTrack.mapTrackingEnabled, "Enabled in map view");
-            KerbTrack.externalTrackingEnabled = GUILayout.Toggle(KerbTrack.externalTrackingEnabled, "Enabled in external view");
+            mapTrackingEnabled = GUILayout.Toggle(mapTrackingEnabled, "Enabled in map view");
+            externalTrackingEnabled = GUILayout.Toggle(externalTrackingEnabled, "Enabled in external view");
 
-            int oldTracker = KerbTrack.activeTracker;
-            KerbTrack.activeTracker = GuiUtils.RadioButton(trackerNames, KerbTrack.activeTracker);
-            if (oldTracker != KerbTrack.activeTracker)
-                KerbTrack.ChangeTracker((Enums.Trackers)KerbTrack.activeTracker);
+            Enums.Trackers oldTracker = activeTracker;
+            activeTracker = (Enums.Trackers)GuiUtils.RadioButton(trackerNames, (int)activeTracker);
+            if (oldTracker != activeTracker)
+                ChangeTracker(activeTracker);
 
-            Enums.Trackers currentTracker = (Enums.Trackers)KerbTrack.activeTracker;
-            switch (currentTracker)
+            switch (activeTracker)
             {
                 /*case Enums.Trackers.FreeTrack:
                     GUILayout.Label("<b>FreeTrack</b>\r\nThis is used for FaceTrackNoIR. Freetrackclient.dll must be placed next to KSP.exe, and must be a 64-bit version if 64-bit KSP is used.");
