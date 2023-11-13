@@ -5,15 +5,12 @@ using System.Text;
 
 namespace KerbTrack
 {
-    public static class Enums
-    {
-        public enum Trackers
-        {
-            //FreeTrack,
-            TrackIR,
-            //OculusRift,
-            Joystick,
-            OpentrackUdp
-        }
-    }
+	public enum Trackers
+	{
+		//FreeTrack,
+		TrackIR,
+		//OculusRift,
+		Joystick,
+		OpentrackUdp
+	}
 }

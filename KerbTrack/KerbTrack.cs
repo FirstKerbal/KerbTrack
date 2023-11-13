@@ -30,7 +30,7 @@ namespace KerbTrack
         private string savePath = System.IO.Path.Combine(
             AssemblyLoader.loadedAssemblies.GetPathByType(typeof(KerbTrack)), "settings.cfg");
 
-        public static void ChangeTracker(Enums.Trackers t)
+        public static void ChangeTracker(Trackers t)
         {
             try
             {
@@ -39,31 +39,31 @@ namespace KerbTrack
 
                 switch (t)
                 {
-                    /*case Enums.Trackers.FreeTrack:
+                    /*case Trackers.FreeTrack:
                         {
                             Debug.Log("[KerbTrack] Using FreeTrack");
                             tracker = new FreeTrackTracker();
                             break;
                         }*/
-                    case Enums.Trackers.TrackIR:
+                    case Trackers.TrackIR:
                         {
                             Debug.Log("[KerbTrack] Using TrackIR");
                             tracker = new TrackIRTracker();
                             break;
                         }
-                    /*case Enums.Trackers.OculusRift:
+                    /*case Trackers.OculusRift:
                         {
                             Debug.Log("[KerbTrack] Using Oculus Rift");
                             tracker = new OVRTracker();
                             break;
                         }*/
-                    case Enums.Trackers.Joystick:
+                    case Trackers.Joystick:
                         {
                             Debug.Log("KerbTrack: Using Joystick");
                             tracker = new JoystickTracker();
                             break;
                         }
-                    case Enums.Trackers.OpentrackUdp:
+                    case Trackers.OpentrackUdp:
                         {
                             Debug.Log("KerbTrack: Using OpentrackUdp");
                             tracker = new OpentrackUdpTracker();
@@ -144,7 +144,7 @@ namespace KerbTrack
             }
         }
 
-        [Persistent] public Enums.Trackers activeTracker = Enums.Trackers.TrackIR;
+        [Persistent] public Trackers activeTracker = Trackers.TrackIR;
 
         [Persistent] public KeyCode toggleEnabledKey = KeyCode.ScrollLock;
         [Persistent] public KeyCode resetOrientationKey = KeyCode.Home;
@@ -254,7 +254,7 @@ namespace KerbTrack
                         {
                             if (!externalTrackingEnabled) return;
 
-                            if (activeTracker == Enums.Trackers.Joystick)
+                            if (activeTracker == Trackers.Joystick)
                             {
                                 Vector2 joyCamPos = new Vector3(0, 0);
                                 ((JoystickTracker)tracker).GetFlightCamData(ref joyCamPos);

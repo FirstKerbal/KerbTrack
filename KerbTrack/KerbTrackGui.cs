@@ -10,7 +10,7 @@ namespace KerbTrack
     {
         public bool guiVisible = false;
         private Rect windowPos = new Rect(Screen.width / 4, Screen.height / 4, 10f, 10f);
-        private string[] trackerNames = Enum.GetNames(typeof(Enums.Trackers));
+        private string[] trackerNames = Enum.GetNames(typeof(Trackers));
         public const int MaxAxisNum = 19;
 
         private void MainGUI(int windowID)
@@ -208,31 +208,31 @@ namespace KerbTrack
             mapTrackingEnabled = GUILayout.Toggle(mapTrackingEnabled, "Enabled in map view");
             externalTrackingEnabled = GUILayout.Toggle(externalTrackingEnabled, "Enabled in external view");
 
-            Enums.Trackers oldTracker = activeTracker;
-            activeTracker = (Enums.Trackers)GuiUtils.RadioButton(trackerNames, (int)activeTracker);
+            Trackers oldTracker = activeTracker;
+            activeTracker = (Trackers)GuiUtils.RadioButton(trackerNames, (int)activeTracker);
             if (oldTracker != activeTracker)
                 ChangeTracker(activeTracker);
 
             switch (activeTracker)
             {
-                /*case Enums.Trackers.FreeTrack:
+                /*case Trackers.FreeTrack:
                     GUILayout.Label("<b>FreeTrack</b>\r\nThis is used for FaceTrackNoIR. Freetrackclient.dll must be placed next to KSP.exe, and must be a 64-bit version if 64-bit KSP is used.");
                     break;*/
-                case Enums.Trackers.TrackIR:
+                case Trackers.TrackIR:
                     GUILayout.Label("<b>TrackIR</b>\r\nSupports TrackIR and other systems which emulate it, such as opentrack.\r\n" +
                         "<b>opentrack</b>\r\nWhen using opentrack, select the Input tracker appripriate to your hardware setup, and select \"freetrack 2.0 Enhanced\" as the Output.\r\n" +
                         "In the Output settings, ensure \"Use TrackIR\" or \"Enable both\" is selected.");
                     break;
-                /*case Enums.Trackers.OculusRift:
+                /*case Trackers.OculusRift:
                     GUILayout.Label("<b>Oculus Rift</b>\r\nRequires an older version of the Oculus Rift runtime (2015), and only 64-bit is supported.\r\n" + 
                         "It's recommended to select \"TrackIR\" as your tracker and use opentrack instead.\r\n" +
                         "Place \"Oculus OVR PosRotWrapper 64-bit.dll\" next to KSP.exe.");
                     break;*/
-                case Enums.Trackers.Joystick:
+                case Trackers.Joystick:
                     GUILayout.Label("<b>Joystick</b>\r\nUse your joystick axes as input. Good for assigning to a spare axis on a joystick if you don't have a head tracker.\r\n" +
                         "If you have a head tracker that isn't supported, try setting it to output as a joystick and using this setting to receive it in KerbTrack.");
                     break;
-                case Enums.Trackers.OpentrackUdp:
+                case Trackers.OpentrackUdp:
                     GUILayout.Label("<b>Opentrack Udp</b>\r\n Supports opentrack's udp protocol, listening on port 4242.");
                     break;
             }
