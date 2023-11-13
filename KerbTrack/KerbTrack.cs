@@ -275,37 +275,14 @@ namespace KerbTrack
                                 bool freeLook = true;
                                 if (freeLook)
                                 {
-                                    // If tracker supports quaternions, use them directly.
-                                    var qtracker = tracker as IQuatTracker;
-                                    if (qtracker != null)
-                                    {
-                                        //var joystickRotation = FlightCamera.fetch.transform.localRotation;
-                                        var quat = FlightCamera.fetch.transform.localRotation;
-                                        qtracker.GetQuatData(ref quat);
-                                        Quaternion deltaRot;
-                                        if (lastRotation != Quaternion.identity)
-                                            deltaRot = Quaternion.Inverse(lastRotation) * quat;
-                                        else
-                                            deltaRot = quat;
-                                        lastRotation = quat;
-
-                                        FlightCamera.fetch.transform.localRotation = FlightCamera.fetch.transform.localRotation * deltaRot;
-                                    }
-                                    else
-                                    {
-                                        pv = pitch * pitchScaleIVA + pitchOffsetIVA;
-                                        yv = yaw * yawScaleIVA + yawOffsetIVA;
-                                        rv = roll * rollScaleIVA + rollOffsetIVA;
-                                        xp = x * xScale + xOffset;
-                                        yp = y * yScale + yOffset;
-                                        zp = z * -zScale + zOffset;
-                                        FlightCamera.fetch.transform.localEulerAngles = new Vector3(-pv, -yv, rv);
-                                    }
-                                    //FlightCamera.fetch.transform.localPosition = new Vector3(xp, yp, zp);
-                                    // Without setting the flight camera transform, the pod rotates about without changing the background.
-                                    //FlightCamera.fetch.transform.rotation = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.rotation);
-                                    //FlightCamera.fetch.transform.position = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.position);
-                                    break;
+                                    pv = pitch * pitchScaleIVA + pitchOffsetIVA;
+                                    yv = yaw * yawScaleIVA + yawOffsetIVA;
+                                    rv = roll * rollScaleIVA + rollOffsetIVA;
+                                    xp = x * xScale + xOffset;
+                                    yp = y * yScale + yOffset;
+                                    zp = z * -zScale + zOffset;
+                                    FlightCamera.fetch.transform.localEulerAngles = new Vector3(-pv, -yv, rv);
+									break;
                                 }
                                 else
                                 {
@@ -327,21 +304,11 @@ namespace KerbTrack
                             xp = x * xScale + xOffset;
                             yp = y * yScale + yOffset;
                             zp = z * -zScale + zOffset;
-                            // If tracker supports quaternions, use them directly.
-                            var qtracker = tracker as IQuatTracker;
-                            if (qtracker != null)
-                            {
-                                var quat = InternalCamera.Instance.transform.localRotation;
-                                qtracker.GetQuatData(ref quat);
-                                InternalCamera.Instance.transform.localRotation = quat;
-                            }
-                            else
-                            {
-                                InternalCamera.Instance.transform.localEulerAngles = new Vector3(
-                                    -Mathf.Clamp(pv, pitchMinIVA, pitchMaxIVA),
-                                    -Mathf.Clamp(yv, yawMinIVA, yawMaxIVA),
-                                    Mathf.Clamp(rv, rollMinIVA, rollMaxIVA));
-                            }
+                            InternalCamera.Instance.transform.localEulerAngles = new Vector3(
+                                -Mathf.Clamp(pv, pitchMinIVA, pitchMaxIVA),
+                                -Mathf.Clamp(yv, yawMinIVA, yawMaxIVA),
+                                Mathf.Clamp(rv, rollMinIVA, rollMaxIVA));
+
                             InternalCamera.Instance.transform.localPosition = new Vector3(
                                 Mathf.Clamp(xp, xMinIVA, xMaxIVA),
                                 Mathf.Clamp(yp, yMinIVA, yMaxIVA),
@@ -361,25 +328,6 @@ namespace KerbTrack
                             break;
                         }
                 }
-            }
-        }
-
-        void LateUpdate()
-        {
-            var qtracker = tracker as IQuatTracker;
-            if (qtracker != null)
-            {
-                //var joystickRotation = FlightCamera.fetch.transform.localRotation;
-                var quat = FlightCamera.fetch.transform.localRotation;
-                qtracker.GetQuatData(ref quat);
-                Quaternion deltaRot;
-                if (lastRotation != Quaternion.identity)
-                    deltaRot = Quaternion.Inverse(lastRotation) * quat;
-                else
-                    deltaRot = quat;
-                lastRotation = quat;
-
-                FlightCamera.fetch.transform.localRotation = FlightCamera.fetch.transform.localRotation * deltaRot;
             }
         }
     }

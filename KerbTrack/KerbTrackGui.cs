@@ -82,26 +82,19 @@ namespace KerbTrack
         private bool _showIvaGui = false;
         private void IvaGui()
         {
-            if (tracker is IQuatTracker)
-            {
-                GUILayout.Label("This tracker's rotation cannot be adjusted.");
-            }
-            else
-            {
-                GuiUtils.LabelValue("IVA Pitch", pv);
-                GuiUtils.LabelValue("IVA Yaw", yv);
-                GuiUtils.LabelValue("IVA Roll", rv);
+            GuiUtils.LabelValue("IVA Pitch", pv);
+            GuiUtils.LabelValue("IVA Yaw", yv);
+            GuiUtils.LabelValue("IVA Roll", rv);
 
-                GUILayout.Label("<b>Scale</b>");
-                GuiUtils.SliderScale("IVA Pitch", ref pitchScaleIVA);
-                GuiUtils.SliderScale("IVA Yaw", ref yawScaleIVA);
-                GuiUtils.SliderScale("IVA Roll", ref rollScaleIVA);
+            GUILayout.Label("<b>Scale</b>");
+            GuiUtils.SliderScale("IVA Pitch", ref pitchScaleIVA);
+            GuiUtils.SliderScale("IVA Yaw", ref yawScaleIVA);
+            GuiUtils.SliderScale("IVA Roll", ref rollScaleIVA);
 
-                GUILayout.Label("<b>Offset</b>");
-                GuiUtils.SliderOffset("IVA Pitch", ref pitchOffsetIVA);
-                GuiUtils.SliderOffset("IVA Yaw", ref yawOffsetIVA);
-                GuiUtils.SliderOffset("IVA Roll", ref rollOffsetIVA);
-            }
+            GUILayout.Label("<b>Offset</b>");
+            GuiUtils.SliderOffset("IVA Pitch", ref pitchOffsetIVA);
+            GuiUtils.SliderOffset("IVA Yaw", ref yawOffsetIVA);
+            GuiUtils.SliderOffset("IVA Roll", ref rollOffsetIVA);
 
             GuiUtils.LabelValue("IVA Left-Right", xp);
             GuiUtils.LabelValue("IVA Up-Down", yp);

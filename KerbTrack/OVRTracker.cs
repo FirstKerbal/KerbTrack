@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class OVRTracker : ITracker, IQuatTracker
+public class OVRTracker : ITracker
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector3f
@@ -58,15 +58,18 @@ public class OVRTracker : ITracker, IQuatTracker
         pos.z = p.z;
     }
 
-    public void GetQuatData(ref Quaternion res)
-    {
-        Quat quat = wrapper_get_quat_rotation(wrapper);
-        // What the hell?
-        res.x = -quat.x;
-        res.y = -quat.y;
-        res.z = quat.z;
-        res.w = quat.w;
-    }
+    // note: we used to allow certain tracker types to bypass adjustments; if we want to bring back this behavior
+    // I'd suggest adding a method to ITracker that indicates whether the rotation data is authoritative
+
+    //public void GetQuatData(ref Quaternion res)
+    //{
+    //    Quat quat = wrapper_get_quat_rotation(wrapper);
+    //    // What the hell?
+    //    res.x = -quat.x;
+    //    res.y = -quat.y;
+    //    res.z = quat.z;
+    //    res.w = quat.w;
+    //}
 
     public void ResetOrientation()
     {
