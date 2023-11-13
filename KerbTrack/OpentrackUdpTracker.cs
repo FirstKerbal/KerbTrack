@@ -73,12 +73,10 @@ class OpentrackUdpTracker : ITracker
                         lock(this.updateLock)
                         {
                             // Datagram just contains 6 doubles, (x, y, z, yaw, pitch, roll).
-                            // KerbTrack seems to want translate values between -0.5 and +0.5.
-                            // Opentrack outputs translate values between -75 and +75 by default
-                            // (highly configurable of course).
-                            this.positionState.x = (float)(reader.ReadDouble() / 150.0);
-                            this.positionState.y = (float)(reader.ReadDouble() / 150.0);
-                            this.positionState.z = (float)(reader.ReadDouble() / 150.0);
+                            // position is in centimeters, rotations are in degrees
+                            this.positionState.x = -(float)(reader.ReadDouble() / 100.0);
+                            this.positionState.y = (float)(reader.ReadDouble() / 100.0);
+                            this.positionState.z = (float)(reader.ReadDouble() / 100.0);
                             this.rotationState.y = (float)reader.ReadDouble();  // y is yaw
                             this.rotationState.x = (float)reader.ReadDouble();  // x is pitch
                             this.rotationState.z = (float)reader.ReadDouble();  // z is roll

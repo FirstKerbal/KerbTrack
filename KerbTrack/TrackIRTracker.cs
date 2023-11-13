@@ -1,6 +1,8 @@
 ﻿using TrackIRUnity;
 using UnityEngine;
 using Microsoft.Win32;
+using static TrackIRUnity.TrackIRClient;
+using System;
 
 public class TrackIRTracker : ITracker
 {
@@ -37,16 +39,24 @@ public class TrackIRTracker : ITracker
     {
         if (trackIRclient != null)
         {
-            TrackIRClient.LPTRACKIRDATA data = trackIRclient.client_HandleTrackIRData();
-            rot.x = -data.fNPPitch / 100;
-            rot.y = data.fNPYaw / 100;
-            rot.z = data.fNPRoll / 100;
+			// https://docs.trackir.com/trackir-sdk/trackir-data
+			TrackIRClient.LPTRACKIRDATA data = trackIRclient.client_HandleTrackIRData();
 
-            pos.x = -data.fNPX / 10000;
-            pos.y = data.fNPY / 10000;
-            pos.z = data.fNPZ / 10000;
-        }
-    }
+			const float kEncodedRangeMinMax = 16383.0f;
+			const float kDecodedTranslationMinMaxMeters = 0.5f; // +/- 50 cm
+            const float kDecodedRotationMinMaxDegrees = 180.0f;
+
+			// Negate right-hand rule rotations 
+			// to be consistent with left-handed coordinate basis.
+			rot.z = (-data.fNPRoll/ kEncodedRangeMinMax) * kDecodedRotationMinMaxDegrees;
+			rot.x = (-data.fNPPitch / kEncodedRangeMinMax) * kDecodedRotationMinMaxDegrees;
+			rot.y = (-data.fNPYaw / kEncodedRangeMinMax) * kDecodedRotationMinMaxDegrees;
+
+			pos.x = (-data.fNPX / kEncodedRangeMinMax) * kDecodedTranslationMinMaxMeters;
+			pos.y = (data.fNPY / kEncodedRangeMinMax) * kDecodedTranslationMinMaxMeters;
+			pos.z = (data.fNPZ / kEncodedRangeMinMax) * kDecodedTranslationMinMaxMeters;
+		}
+	}
 
     public void ResetOrientation() { }
     public void Stop() { }

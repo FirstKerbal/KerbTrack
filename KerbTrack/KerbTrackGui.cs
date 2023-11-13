@@ -57,9 +57,9 @@ namespace KerbTrack
             if (_showJoystickGui)
                 JoystickGui();
             if (_showIvaGui)
-                IvaGui();
+                ProfileGui(IVA);
             if (_showFlightGui)
-                FlightGui();
+                ProfileGui(Flight);
             if (_showSettingsGui)
                 SettingsGui();
 
@@ -79,73 +79,56 @@ namespace KerbTrack
             }
         }
 
-        private bool _showIvaGui = false;
-        private void IvaGui()
+        private void ProfileGui(AdjustmentProfile profile)
         {
-            GuiUtils.LabelValue("IVA Pitch", pv);
-            GuiUtils.LabelValue("IVA Yaw", yv);
-            GuiUtils.LabelValue("IVA Roll", rv);
-
-            GUILayout.Label("<b>Scale</b>");
-            GuiUtils.SliderScale("IVA Pitch", ref pitchScaleIVA);
-            GuiUtils.SliderScale("IVA Yaw", ref yawScaleIVA);
-            GuiUtils.SliderScale("IVA Roll", ref rollScaleIVA);
-
-            GUILayout.Label("<b>Offset</b>");
-            GuiUtils.SliderOffset("IVA Pitch", ref pitchOffsetIVA);
-            GuiUtils.SliderOffset("IVA Yaw", ref yawOffsetIVA);
-            GuiUtils.SliderOffset("IVA Roll", ref rollOffsetIVA);
-
-            GuiUtils.LabelValue("IVA Left-Right", xp);
-            GuiUtils.LabelValue("IVA Up-Down", yp);
-            GuiUtils.LabelValue("IVA In-Out", zp);
-
-            GUILayout.Label("<b>Scale</b>");
-            GuiUtils.SliderScale("Left/Right (X)", ref xScale);
-            GuiUtils.SliderScale("Up/Down (Y)", ref yScale);
-            GuiUtils.SliderScale("In/Out (Z)", ref zScale);
-
-            GUILayout.Label("<b>Offset</b>");
-            GuiUtils.Slider("Left/Right (X)", ref xOffset, xMinIVA, xMaxIVA);
-            GuiUtils.Slider("Up/Down (Y)", ref yOffset, yMinIVA, yMaxIVA);
-            GuiUtils.Slider("In/Out (Z)", ref zOffset, zMinIVA, zMaxIVA);
+            AdjustmentGui(true, InputRotation, profile.Rotation, OutputRotation);
+            AdjustmentGui(false, InputTranslation, profile.Translation, OutputTranslation);
         }
+
+        private void AdjustmentGui(bool rotation, Vector3 input, AdjustmentSettings settings, Vector3 output)
+        {
+            string label = rotation ? "Rotation" : "Translation";
+            string xLabel = rotation ? "Pitch" : "Left/Right";
+            string yLabel = rotation ? "Yaw" : "Up/Down";
+            string zLabel = rotation ? "Roll" : "Fore/Back";
+            float offsetRange = rotation ? 90f : 2f;
+
+
+            GUILayout.Label($"Input {label}");
+            GuiUtils.LabelValue(xLabel, input.x);
+            GuiUtils.LabelValue(yLabel, input.y);
+            GuiUtils.LabelValue(zLabel, input.z);
+
+            GUILayout.Label($"Output {label}");
+            GuiUtils.LabelValue(xLabel, output.x);
+            GuiUtils.LabelValue(yLabel, output.y);
+            GuiUtils.LabelValue(zLabel, output.z);
+
+            GUILayout.Label($"<b>{label} Scale</b>");
+            GuiUtils.Slider(xLabel, ref settings.Scale.x, 0.0f, 5.0f);
+            GuiUtils.Slider(yLabel, ref settings.Scale.y, 0.0f, 5.0f);
+            GuiUtils.Slider(zLabel, ref settings.Scale.z, 0.0f, 5.0f);
+
+            GUILayout.Label($"<b>{label} Offset</b>");
+            GuiUtils.Slider(xLabel, ref settings.Offset.x, -offsetRange, offsetRange);
+            GuiUtils.Slider(yLabel, ref settings.Offset.y, -offsetRange, offsetRange);
+            GuiUtils.Slider(zLabel, ref settings.Offset.z, -offsetRange, offsetRange);
+
+            GUILayout.Label($"<b>{label} Limits</b>");
+            GuiUtils.Slider($"Min {xLabel}", ref settings.Min.x, -2 * offsetRange, 2 * offsetRange);
+            GuiUtils.Slider($"Max {xLabel}", ref settings.Max.x, -2 * offsetRange, 2 * offsetRange);
+            GuiUtils.Slider($"Min {yLabel}", ref settings.Min.y, -2 * offsetRange, 2 * offsetRange);
+            GuiUtils.Slider($"Max {yLabel}", ref settings.Max.y, -2 * offsetRange, 2 * offsetRange);
+            GuiUtils.Slider($"Min {zLabel}", ref settings.Min.z, -2 * offsetRange, 2 * offsetRange);
+            GuiUtils.Slider($"Max {zLabel}", ref settings.Max.z, -2 * offsetRange, 2 * offsetRange);
+        }
+
+        private bool _showIvaGui = false;
+        
 
         private bool _showFlightGui = false;
-        private void FlightGui()
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Flight Pitch");
-            GUILayout.Label(pv.ToString());
-            GUILayout.EndHorizontal();
-            GUILayout.Label(pitchScaleFlight.ToString());
-            pitchScaleFlight = GUILayout.HorizontalSlider(pitchScaleFlight, 0, 1);
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Flight Yaw");
-            GUILayout.Label(yv.ToString());
-            GUILayout.EndHorizontal();
-            GUILayout.Label(yawScaleFlight.ToString());
-            yawScaleFlight = GUILayout.HorizontalSlider(yawScaleFlight, 0, 1);
-        }
 
         private bool _showMapGui = false;
-        private void MapGui()
-        {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Map Pitch");
-            GUILayout.Label(pv.ToString());
-            GUILayout.EndHorizontal();
-            GUILayout.Label(pitchScaleMap.ToString());
-            pitchScaleMap = GUILayout.HorizontalSlider(pitchScaleMap, 0, 1);
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Map Yaw");
-            GUILayout.Label(yv.ToString());
-            GUILayout.EndHorizontal();
-            GUILayout.Label(yawScaleMap.ToString());
-            yawScaleMap = GUILayout.HorizontalSlider(yawScaleMap, 0, 1);
-        }
 
         private bool _showJoystickGui = false;
         private void JoystickGui()

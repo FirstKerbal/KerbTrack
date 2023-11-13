@@ -18,6 +18,48 @@ using UnityEngine;
 
 namespace KerbTrack
 {
+    public class AdjustmentSettings
+    {
+        public AdjustmentSettings(Vector3 scale, Vector3 offset, Vector3 min, Vector3 max)
+        {
+            Scale = scale;
+            Offset = offset;
+            Min = min;
+            Max = max;
+        }
+
+        [Persistent] public Vector3 Scale;
+        [Persistent] public Vector3 Offset;
+        [Persistent] public Vector3 Min;
+        [Persistent] public Vector3 Max;
+    }
+
+    public class AdjustmentProfile
+    {
+        static AdjustmentSettings MakeDefaultRotation()
+        {
+            // pitch, yaw roll
+            return new AdjustmentSettings(
+                new Vector3(1.0f, 1.0f, 0.0f),  // scale
+                Vector3.zero,                   // offset
+                new Vector3(-90f, -135f, -90f), // min limit
+                new Vector3(90f, 135f, 90f));   // max limit
+        }
+
+        static AdjustmentSettings MakeDefaultTranslation()
+        {
+            // horizontal, vertical, fore/back
+            return new AdjustmentSettings(
+                new Vector3(1.0f, 1.0f, 1.0f), // scale
+                Vector3.zero, // offset
+                -0.2f * Vector3.one, // min limit
+                0.2f * Vector3.one); // max limit
+        }
+
+		[Persistent] public AdjustmentSettings Rotation = MakeDefaultRotation();
+        [Persistent] public AdjustmentSettings Translation = MakeDefaultTranslation();
+    }
+
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public partial class KerbTrack : MonoBehaviour
     {
@@ -169,49 +211,21 @@ namespace KerbTrack
         [Persistent] public int joyCamOrbitAxisId = -1;
         [Persistent] public bool joyCamOrbitInverted = false;
 
-        [Persistent] public float pitchScaleIVA = 0.3f;
-        [Persistent] public float pitchOffsetIVA = 0.0f;
-        [Persistent] public float yawScaleIVA = 0.3f;
-        [Persistent] public float yawOffsetIVA = 0.0f;
-        [Persistent] public float rollScaleIVA = 0.15f;
-        [Persistent] public float rollOffsetIVA = 0.0f;
-        [Persistent] public float xScale = 0.1f;
-        [Persistent] public float xOffset = 0.0f;
-        [Persistent] public float yScale = 0.1f;
-        [Persistent] public float yOffset = 0.0f;
-        [Persistent] public float zScale = 0.1f;
-        [Persistent] public float zOffset = 0.0f;
-        [Persistent] public float pitchScaleFlight = 0.01f;
-        [Persistent] public float yawScaleFlight = 0.01f;
-        [Persistent] public float pitchScaleMap = 0.01f;
-        [Persistent] public float yawScaleMap = 0.01f;
+        [Persistent] public AdjustmentProfile IVA = new AdjustmentProfile();
+        [Persistent] public AdjustmentProfile Flight = new AdjustmentProfile();
+        [Persistent] public AdjustmentProfile Map = new AdjustmentProfile();
+        [Persistent] public AdjustmentProfile KSC = new AdjustmentProfile();
+        [Persistent] public AdjustmentProfile Editor = new AdjustmentProfile();
+        [Persistent] public AdjustmentProfile MainMenu = new AdjustmentProfile();
 
-        // Ignore the built-in max/min values.
+        #endregion Persistence
 
-        [Persistent] public float pitchMaxIVA = 120f;
-        [Persistent] public float pitchMinIVA = -90f;
-        [Persistent] public float yawMaxIVA = 135f;
-        [Persistent] public float yawMinIVA = -135f;
-        [Persistent] public float rollMaxIVA = 90f;
-        [Persistent] public float rollMinIVA = -90f;
-        [Persistent] public float xMaxIVA = 0.15f;
-        [Persistent] public float xMinIVA = -0.15f;
-        [Persistent] public float yMaxIVA = 0.1f;
-        [Persistent] public float yMinIVA = -0.1f;
-        [Persistent] public float zMaxIVA = 0.1f;
-        [Persistent] public float zMinIVA = -0.15f;
-
-    #endregion Persistence
-
-        // Values after scaling.
-        public static float pv = 0f;
-        public static float yv = 0f;
-        public static float rv = 0f;
-        public static float xp = 0f;
-        public static float yp = 0f;
-        public static float zp = 0f;
-
-        Quaternion lastRotation = Quaternion.identity;
+        // raw values from the tracker
+        public Vector3 InputRotation;
+        public Vector3 InputTranslation;
+		// Values after applying the adjustment settings
+		public Vector3 OutputRotation;
+        public Vector3 OutputTranslation;
 
         void Update()
         {
@@ -219,116 +233,169 @@ namespace KerbTrack
                 trackerEnabled = !trackerEnabled;
             if (Input.GetKeyDown(resetOrientationKey))
                 tracker.ResetOrientation();
+        }
 
-            if (!trackerEnabled)
-                return;
+		void LateUpdate()
+		{
+			if (!trackerEnabled)
+				return;
 
-            if (tracker != null)
+			if (tracker != null)
+			{
+				InputRotation = Vector3.zero;
+				InputTranslation = Vector3.zero;
+				try
+				{
+					tracker.GetData(ref InputRotation, ref InputTranslation);
+				}
+				catch (Exception e)
+				{
+					Debug.Log("[KerbTrack] " + activeTracker + " error: " + e.Message + "\n" + e.StackTrace);
+					trackerEnabled = false;
+					return;
+				}
+
+				var currentScene = GetCurrentScene();
+				var currentProfile = GetProfile(currentScene);
+
+				OutputRotation = ApplyAdjustments(InputRotation, currentProfile.Rotation);
+				OutputTranslation = ApplyAdjustments(InputTranslation, currentProfile.Translation);
+
+				// should this be a delegate table or something..?  It's unlikely that we'll ever add new ones...
+				switch (currentScene)
+				{
+					case TrackerScene.Flight: ApplyFlight(); break;
+					case TrackerScene.IVA: ApplyIVA(); break;
+					case TrackerScene.Map: ApplyMap(); break;
+					case TrackerScene.KSC: ApplyKSC(); break;
+					case TrackerScene.Editor: ApplyEditor(); break;
+					case TrackerScene.MainMenu: ApplyMainMenu(); break;
+				}
+			}
+		}
+
+		static TrackerScene GetCurrentScene()
+        {
+            switch (HighLogic.LoadedScene)
             {
-                Vector3 rot = new Vector3(0, 0, 0);
-                Vector3 pos = new Vector3(0, 0, 0);
-                try
-                {
-                    tracker.GetData(ref rot, ref pos);
-                }
-                catch (Exception e)
-                {
-                    Debug.Log("[KerbTrack] " + activeTracker + " error: " + e.Message + "\n" + e.StackTrace);
-                    trackerEnabled = false;
-                    return;
-                }
-                float pitch = (float)rot.x;
-                float yaw = (float)rot.y;
-                float roll = (float)rot.z;
-                float x = pos.x;
-                float y = pos.y;
-                float z = pos.z;
+                case GameScenes.EDITOR: return TrackerScene.Editor;
+                case GameScenes.MAINMENU: return TrackerScene.MainMenu;
+                case GameScenes.SPACECENTER: return TrackerScene.KSC;
+            }
 
-                switch (CameraManager.Instance.currentCameraMode)
-                {
-                    case CameraManager.CameraMode.External:
-                        {
-                            break;
-                        }
-                    case CameraManager.CameraMode.Flight:
-                        {
-                            if (!externalTrackingEnabled) return;
-
-                            if (activeTracker == Trackers.Joystick)
-                            {
-                                Vector2 joyCamPos = new Vector3(0, 0);
-                                ((JoystickTracker)tracker).GetFlightCamData(ref joyCamPos);
-                                bool relative = true;
-                                if (relative)
-                                {
-                                    FlightCamera.fetch.camPitch += -joyCamPos.x * pitchScaleFlight * Time.deltaTime;
-                                    FlightCamera.fetch.camHdg += -joyCamPos.y * yawScaleFlight * Time.deltaTime;
-                                }
-                                else
-                                {
-                                    FlightCamera.fetch.camPitch = -joyCamPos.x * pitchScaleFlight;
-                                    FlightCamera.fetch.camHdg = -joyCamPos.y * yawScaleFlight;
-                                }
-                            }
-                            else
-                            {
-                                bool freeLook = true;
-                                if (freeLook)
-                                {
-                                    pv = pitch * pitchScaleIVA + pitchOffsetIVA;
-                                    yv = yaw * yawScaleIVA + yawOffsetIVA;
-                                    rv = roll * rollScaleIVA + rollOffsetIVA;
-                                    xp = x * xScale + xOffset;
-                                    yp = y * yScale + yOffset;
-                                    zp = z * -zScale + zOffset;
-                                    FlightCamera.fetch.transform.localEulerAngles = new Vector3(-pv, -yv, rv);
-									break;
-                                }
-                                else
-                                {
-                                    // Orbit around the vessel in the same way as the stock camera.
-                                    FlightCamera.fetch.camPitch = -pitch * pitchScaleFlight;
-                                    FlightCamera.fetch.camHdg = -yaw * yawScaleFlight;
-                                }
-                            }
-                            pv = pitch * pitchScaleFlight;
-                            yv = yaw * yawScaleFlight;
-                            break;
-                        }
-                    case CameraManager.CameraMode.Internal: // Window zoom cameras
-                    case CameraManager.CameraMode.IVA: // Main IVA cameras
-                        {
-                            pv = pitch * pitchScaleIVA + pitchOffsetIVA;
-                            yv = yaw * yawScaleIVA + yawOffsetIVA;
-                            rv = roll * rollScaleIVA + rollOffsetIVA;
-                            xp = x * xScale + xOffset;
-                            yp = y * yScale + yOffset;
-                            zp = z * -zScale + zOffset;
-                            InternalCamera.Instance.transform.localEulerAngles = new Vector3(
-                                -Mathf.Clamp(pv, pitchMinIVA, pitchMaxIVA),
-                                -Mathf.Clamp(yv, yawMinIVA, yawMaxIVA),
-                                Mathf.Clamp(rv, rollMinIVA, rollMaxIVA));
-
-                            InternalCamera.Instance.transform.localPosition = new Vector3(
-                                Mathf.Clamp(xp, xMinIVA, xMaxIVA),
-                                Mathf.Clamp(yp, yMinIVA, yMaxIVA),
-                                Mathf.Clamp(zp, zMinIVA, zMaxIVA));
-                            // Without setting the flight camera transform, the pod rotates about without changing the background.
-                            FlightCamera.fetch.transform.rotation = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.rotation);
-                            FlightCamera.fetch.transform.position = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.position);
-                            break;
-                        }
-                    case CameraManager.CameraMode.Map:
-                        {
-                            if (!mapTrackingEnabled) return;
-                            PlanetariumCamera.fetch.camPitch = -pitch * pitchScaleMap;
-                            PlanetariumCamera.fetch.camHdg = -yaw * yawScaleMap;
-                            pv = pitch * pitchScaleMap;
-                            yv = yaw * yawScaleMap;
-                            break;
-                        }
-                }
+            switch (CameraManager.Instance.currentCameraMode)
+            {
+                case CameraManager.CameraMode.Map: return TrackerScene.Map;
+                case CameraManager.CameraMode.IVA:
+                case CameraManager.CameraMode.Internal: return TrackerScene.IVA;
+                default:
+                    return TrackerScene.Flight;
             }
         }
-    }
+
+        AdjustmentProfile GetProfile(TrackerScene scene)
+        {
+            switch (scene)
+            {
+                case TrackerScene.Flight: return Flight;
+                case TrackerScene.IVA: return IVA;
+                case TrackerScene.Map: return Map;
+                case TrackerScene.KSC: return KSC;
+                case TrackerScene.Editor: return Editor;
+                case TrackerScene.MainMenu: return MainMenu;
+                default: return Flight;
+            }
+        }
+
+		#region Application functions
+
+		void ApplyFlight()
+        {
+			if (!externalTrackingEnabled) return;
+
+			if (activeTracker == Trackers.Joystick)
+			{
+				Vector2 joyCamPos = new Vector3(0, 0);
+				((JoystickTracker)tracker).GetFlightCamData(ref joyCamPos);
+				bool relative = true;
+				if (relative)
+				{
+					FlightCamera.fetch.camPitch += -joyCamPos.x * Flight.Rotation.Scale.x * Time.deltaTime;
+					FlightCamera.fetch.camHdg += -joyCamPos.y * Flight.Rotation.Scale.y * Time.deltaTime;
+				}
+				else
+				{
+					FlightCamera.fetch.camPitch = -joyCamPos.x * Flight.Rotation.Scale.x;
+					FlightCamera.fetch.camHdg = -joyCamPos.y * Flight.Rotation.Scale.y;
+				}
+			}
+			else
+			{
+				bool freeLook = true;
+				if (freeLook)
+				{
+					FlightCamera.fetch.transform.localEulerAngles = OutputRotation;
+				}
+				else
+				{
+                    // Orbit around the vessel in the same way as the stock camera.
+                    FlightCamera.fetch.camPitch = OutputRotation.x;
+                    FlightCamera.fetch.camHdg = OutputRotation.y;
+				}
+			}
+		}
+
+        void ApplyIVA()
+        {
+			InternalCamera.Instance.transform.localEulerAngles = OutputRotation;
+            InternalCamera.Instance.transform.localPosition = OutputTranslation;
+
+			// Without setting the flight camera transform, the pod rotates about without changing the background.
+			FlightCamera.fetch.transform.rotation = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.rotation);
+			FlightCamera.fetch.transform.position = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.position);
+		}
+
+        void ApplyMap()
+        {
+			if (!mapTrackingEnabled) return;
+            PlanetariumCamera.fetch.camPitch = OutputRotation.x;
+            PlanetariumCamera.fetch.camHdg = OutputRotation.y;
+		}
+
+        void ApplyKSC()
+        {
+
+        }
+
+        void ApplyEditor()
+        {
+
+        }
+
+        void ApplyMainMenu()
+        {
+
+        }
+
+        Vector3 ApplyAdjustments(Vector3 input, AdjustmentSettings settings)
+        {
+            Vector3 adjusted = Mult(input, settings.Scale) + settings.Offset;
+            return Clamp(adjusted, settings.Min, settings.Max);
+        }
+
+        #endregion
+
+		static Vector3 Mult(Vector3 a, Vector3 b)
+		{
+			return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+		}
+
+		static Vector3 Clamp(Vector3 input, Vector3 min, Vector3 max)
+		{
+			return new Vector3(
+				Mathf.Clamp(input.x, min.x, max.x),
+				Mathf.Clamp(input.y, min.y, max.y),
+				Mathf.Clamp(input.z, min.z, max.z));
+		}
+	}
 }
