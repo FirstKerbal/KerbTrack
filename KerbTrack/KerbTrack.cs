@@ -128,7 +128,7 @@ namespace KerbTrack
             
             node.name = "KERBTRACK_SETTINGS";
 
-            ConfigNode.WriteObject(this, node, 0);
+            ConfigNode.CreateConfigFromObject(this, node);
 
             node.Save(savePath);
         }
