@@ -56,7 +56,7 @@ namespace KerbTrack
                 0.2f * Vector3.one); // max limit
         }
 
-		[Persistent] public AdjustmentSettings Rotation = MakeDefaultRotation();
+        [Persistent] public AdjustmentSettings Rotation = MakeDefaultRotation();
         [Persistent] public AdjustmentSettings Translation = MakeDefaultTranslation();
     }
 
@@ -223,8 +223,8 @@ namespace KerbTrack
         // raw values from the tracker
         public Vector3 InputRotation;
         public Vector3 InputTranslation;
-		// Values after applying the adjustment settings
-		public Vector3 OutputRotation;
+        // Values after applying the adjustment settings
+        public Vector3 OutputRotation;
         public Vector3 OutputTranslation;
 
         void Update()
@@ -235,46 +235,46 @@ namespace KerbTrack
                 tracker.ResetOrientation();
         }
 
-		void LateUpdate()
-		{
-			if (!trackerEnabled)
-				return;
+        void LateUpdate()
+        {
+            if (!trackerEnabled)
+                return;
 
-			if (tracker != null)
-			{
-				InputRotation = Vector3.zero;
-				InputTranslation = Vector3.zero;
-				try
-				{
-					tracker.GetData(ref InputRotation, ref InputTranslation);
-				}
-				catch (Exception e)
-				{
-					Debug.Log("[KerbTrack] " + activeTracker + " error: " + e.Message + "\n" + e.StackTrace);
-					trackerEnabled = false;
-					return;
-				}
+            if (tracker != null)
+            {
+                InputRotation = Vector3.zero;
+                InputTranslation = Vector3.zero;
+                try
+                {
+                    tracker.GetData(ref InputRotation, ref InputTranslation);
+                }
+                catch (Exception e)
+                {
+                    Debug.Log("[KerbTrack] " + activeTracker + " error: " + e.Message + "\n" + e.StackTrace);
+                    trackerEnabled = false;
+                    return;
+                }
 
-				var currentScene = GetCurrentScene();
-				var currentProfile = GetProfile(currentScene);
+                var currentScene = GetCurrentScene();
+                var currentProfile = GetProfile(currentScene);
 
-				OutputRotation = ApplyAdjustments(InputRotation, currentProfile.Rotation);
-				OutputTranslation = ApplyAdjustments(InputTranslation, currentProfile.Translation);
+                OutputRotation = ApplyAdjustments(InputRotation, currentProfile.Rotation);
+                OutputTranslation = ApplyAdjustments(InputTranslation, currentProfile.Translation);
 
-				// should this be a delegate table or something..?  It's unlikely that we'll ever add new ones...
-				switch (currentScene)
-				{
-					case TrackerScene.Flight: ApplyFlight(); break;
-					case TrackerScene.IVA: ApplyIVA(); break;
-					case TrackerScene.Map: ApplyMap(); break;
-					case TrackerScene.KSC: ApplyKSC(); break;
-					case TrackerScene.Editor: ApplyEditor(); break;
-					case TrackerScene.MainMenu: ApplyMainMenu(); break;
-				}
-			}
-		}
+                // should this be a delegate table or something..?  It's unlikely that we'll ever add new ones...
+                switch (currentScene)
+                {
+                    case TrackerScene.Flight: ApplyFlight(); break;
+                    case TrackerScene.IVA: ApplyIVA(); break;
+                    case TrackerScene.Map: ApplyMap(); break;
+                    case TrackerScene.KSC: ApplyKSC(); break;
+                    case TrackerScene.Editor: ApplyEditor(); break;
+                    case TrackerScene.MainMenu: ApplyMainMenu(); break;
+                }
+            }
+        }
 
-		static TrackerScene GetCurrentScene()
+        static TrackerScene GetCurrentScene()
         {
             switch (HighLogic.LoadedScene)
             {
@@ -307,60 +307,61 @@ namespace KerbTrack
             }
         }
 
-		#region Application functions
+        #region Application functions
 
-		void ApplyFlight()
+        void ApplyFlight()
         {
-			if (!externalTrackingEnabled) return;
+            if (!externalTrackingEnabled) return;
 
-			if (activeTracker == Trackers.Joystick)
-			{
-				Vector2 joyCamPos = new Vector3(0, 0);
-				((JoystickTracker)tracker).GetFlightCamData(ref joyCamPos);
-				bool relative = true;
-				if (relative)
-				{
-					FlightCamera.fetch.camPitch += -joyCamPos.x * Flight.Rotation.Scale.x * Time.deltaTime;
-					FlightCamera.fetch.camHdg += -joyCamPos.y * Flight.Rotation.Scale.y * Time.deltaTime;
-				}
-				else
-				{
-					FlightCamera.fetch.camPitch = -joyCamPos.x * Flight.Rotation.Scale.x;
-					FlightCamera.fetch.camHdg = -joyCamPos.y * Flight.Rotation.Scale.y;
-				}
-			}
-			else
-			{
-				bool freeLook = true;
-				if (freeLook)
-				{
-					FlightCamera.fetch.transform.localEulerAngles = OutputRotation;
-				}
-				else
-				{
+            if (activeTracker == Trackers.Joystick)
+            {
+                Vector2 joyCamPos = new Vector3(0, 0);
+                ((JoystickTracker)tracker).GetFlightCamData(ref joyCamPos);
+                bool relative = true;
+                if (relative)
+                {
+                    FlightCamera.fetch.camPitch += -joyCamPos.x * Flight.Rotation.Scale.x * Time.deltaTime;
+                    FlightCamera.fetch.camHdg += -joyCamPos.y * Flight.Rotation.Scale.y * Time.deltaTime;
+                }
+                else
+                {
+                    FlightCamera.fetch.camPitch = -joyCamPos.x * Flight.Rotation.Scale.x;
+                    FlightCamera.fetch.camHdg = -joyCamPos.y * Flight.Rotation.Scale.y;
+                }
+            }
+            else
+            {
+                bool freeLook = true;
+                if (freeLook)
+                {
+                    //FlightCamera.fetch.transform.localEulerAngles = OutputRotation;
+                    
+                }
+                else
+                {
                     // Orbit around the vessel in the same way as the stock camera.
                     FlightCamera.fetch.camPitch = OutputRotation.x;
                     FlightCamera.fetch.camHdg = OutputRotation.y;
-				}
-			}
-		}
+                }
+            }
+        }
 
         void ApplyIVA()
         {
-			InternalCamera.Instance.transform.localEulerAngles = OutputRotation;
+            InternalCamera.Instance.transform.localEulerAngles = OutputRotation;
             InternalCamera.Instance.transform.localPosition = OutputTranslation;
 
-			// Without setting the flight camera transform, the pod rotates about without changing the background.
-			FlightCamera.fetch.transform.rotation = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.rotation);
-			FlightCamera.fetch.transform.position = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.position);
-		}
+            // Without setting the flight camera transform, the pod rotates about without changing the background.
+            FlightCamera.fetch.transform.rotation = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.rotation);
+            FlightCamera.fetch.transform.position = InternalSpace.InternalToWorld(InternalCamera.Instance.transform.position);
+        }
 
         void ApplyMap()
         {
-			if (!mapTrackingEnabled) return;
+            if (!mapTrackingEnabled) return;
             PlanetariumCamera.fetch.camPitch = OutputRotation.x;
             PlanetariumCamera.fetch.camHdg = OutputRotation.y;
-		}
+        }
 
         void ApplyKSC()
         {
@@ -385,17 +386,17 @@ namespace KerbTrack
 
         #endregion
 
-		static Vector3 Mult(Vector3 a, Vector3 b)
-		{
-			return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
-		}
+        static Vector3 Mult(Vector3 a, Vector3 b)
+        {
+            return new Vector3(a.x * b.x, a.y * b.y, a.z * b.z);
+        }
 
-		static Vector3 Clamp(Vector3 input, Vector3 min, Vector3 max)
-		{
-			return new Vector3(
-				Mathf.Clamp(input.x, min.x, max.x),
-				Mathf.Clamp(input.y, min.y, max.y),
-				Mathf.Clamp(input.z, min.z, max.z));
-		}
-	}
+        static Vector3 Clamp(Vector3 input, Vector3 min, Vector3 max)
+        {
+            return new Vector3(
+                Mathf.Clamp(input.x, min.x, max.x),
+                Mathf.Clamp(input.y, min.y, max.y),
+                Mathf.Clamp(input.z, min.z, max.z));
+        }
+    }
 }
