@@ -17,6 +17,19 @@ namespace KerbTrack
             GUILayout.EndHorizontal();
         }
 
+        public static void Slider(string label, ref float variable, float from, float to, float defaultValue)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label + ": " + variable.ToString());
+            GUILayout.FlexibleSpace();
+            variable = GUILayout.HorizontalSlider(variable, from, to, GUILayout.Width(250));
+            if (GUILayout.Button("Reset"))
+            {
+                variable = defaultValue;
+            }
+            GUILayout.EndHorizontal();
+        }
+
         public static void SliderScale(string label, ref float variable)
         {
             Slider(label, ref variable, 0, 1);

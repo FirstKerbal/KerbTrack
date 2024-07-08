@@ -74,7 +74,7 @@ namespace KerbTrack
 			if (kerbTrack.joyCamPitchAxisId != -1)
             {
                 string pitchAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyCamPitchAxisId;
-                rot.x = Deadzone(Input.GetAxis(pitchAxis)) * 200;
+                rot.x = Deadzone(Input.GetAxis(pitchAxis)) * 5;
 
                 if (kerbTrack.joyCamPitchInverted)
                     rot.x *= -1;
@@ -82,21 +82,18 @@ namespace KerbTrack
             if (kerbTrack.joyCamOrbitAxisId != -1)
             {
                 string orbitAxis = "joy" + kerbTrack.joystickId + "." + kerbTrack.joyCamOrbitAxisId;
-                rot.y = Deadzone(Input.GetAxis(orbitAxis)) * 200;
+                rot.y = Deadzone(Input.GetAxis(orbitAxis)) * 5;
                 if (kerbTrack.joyCamOrbitInverted)
                     rot.y *= -1;
             }
         }
 
-        private float Deadzone(float val)
+        private float Deadzone(float val, float deadzone = 0.2f)
         {
-            //Debug.Log("Testing " + val);
-            if (val > -0.2f && val < 0.2f)
+            if (val > -deadzone && val < deadzone)
             {
-                //Debug.Log("In deadzone");
                 return 0f;
             }
-            //Debug.Log("Out of deadzone");
             return val;
         }
 

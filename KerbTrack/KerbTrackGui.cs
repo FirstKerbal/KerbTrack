@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using static EdyCommonTools.RotationController;
 
 namespace KerbTrack
 {
@@ -13,6 +14,11 @@ namespace KerbTrack
         private string[] trackerNames = Enum.GetNames(typeof(Trackers));
         public const int MaxAxisNum = 19;
 
+        private bool _showTrackerSettingsGui = true;
+        private bool _showIvaGui = false;
+        private bool _showFlightGui = false;
+        private bool _showMapGui = false;
+
         private void MainGUI(int windowID)
         {
             GUILayout.BeginVertical();
@@ -21,47 +27,66 @@ namespace KerbTrack
                 " (" + toggleEnabledKey + ")";
             GUILayout.Label(statusText);
 
-            //if (activeTracker == (int)Trackers.Joystick)
-
             GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Tracker Settings"))
+            {
+                _showTrackerSettingsGui = true;
+                _showIvaGui = false;
+                _showFlightGui = false;
+                _showMapGui = false;
+            }
             if (GUILayout.Button("IVA config"))
             {
+                _showTrackerSettingsGui = false;
                 _showIvaGui = true;
                 _showFlightGui = false;
-                _showJoystickGui = false;
-                _showSettingsGui = false;
+                _showMapGui = false;
             }
             if (GUILayout.Button("Flight config"))
             {
+                _showTrackerSettingsGui = false;
                 _showIvaGui = false;
                 _showFlightGui = true;
-                _showJoystickGui = false;
-                _showSettingsGui = false;
+                _showMapGui = false;
             }
-            if (GUILayout.Button("Joystick config"))
+            if (GUILayout.Button("Map config"))
             {
-                _showIvaGui = false;
-                _showJoystickGui = true;
-                _showFlightGui = false;
-                _showSettingsGui = false;
-            }
-            if (GUILayout.Button("Settings"))
-            {
+                _showTrackerSettingsGui = false;
                 _showIvaGui = false;
                 _showFlightGui = false;
-                _showJoystickGui = false;
-                _showSettingsGui = true;
+                _showMapGui = true;
             }
             GUILayout.EndHorizontal();
 
-            if (_showJoystickGui)
-                JoystickGui();
+            if (_showTrackerSettingsGui)
+                TrackerSettingsGui();
             if (_showIvaGui)
+            {
+                GUILayout.Label("IVA");
                 ProfileGui(IVA);
+            }
             if (_showFlightGui)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Flight");
+                GUILayout.FlexibleSpace();
+                externalTrackingEnabled = GUILayout.Toggle(externalTrackingEnabled, "Enabled flight view?");
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
                 ProfileGui(Flight);
-            if (_showSettingsGui)
-                SettingsGui();
+            }
+            if (_showMapGui)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Map");
+                GUILayout.FlexibleSpace();
+                mapTrackingEnabled = GUILayout.Toggle(mapTrackingEnabled, "Enabled in map view?");
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+
+                ProfileGui(Map);
+            }
 
             /*if (CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.Internal ||
                 CameraManager.Instance.currentCameraMode == CameraManager.CameraMode.IVA)*/
@@ -79,10 +104,32 @@ namespace KerbTrack
             }
         }
 
-        private void ProfileGui(AdjustmentProfile profile)
+        bool _showRotationProfileGui = true;
+        bool _showTranslationProfileGui = false;
+        private void ProfileGui(AdjustmentProfile profile, bool allowTranslationGui = true)
         {
-            AdjustmentGui(true, InputRotation, profile.Rotation, OutputRotation);
-            AdjustmentGui(false, InputTranslation, profile.Translation, OutputTranslation);
+            GUILayout.BeginHorizontal();
+            if (allowTranslationGui)
+            {
+                if (GUILayout.Button("Rotation"))
+                {
+                    _showRotationProfileGui = true;
+                    _showTranslationProfileGui = false;
+                }
+                if (GUILayout.Button("Translation"))
+                {
+                    _showRotationProfileGui = false;
+                    _showTranslationProfileGui = true;
+                }
+            }
+            else
+            {
+                _showRotationProfileGui = true;
+                _showTranslationProfileGui = false;
+            }
+            GUILayout.EndHorizontal();
+            if (_showRotationProfileGui) AdjustmentGui(true, InputRotation, profile.Rotation, OutputRotation);
+            if (_showTranslationProfileGui) AdjustmentGui(false, InputTranslation, profile.Translation, OutputTranslation);
         }
 
         private void AdjustmentGui(bool rotation, Vector3 input, AdjustmentSettings settings, Vector3 output)
@@ -93,44 +140,35 @@ namespace KerbTrack
             string zLabel = rotation ? "Roll" : "Fore/Back";
             float offsetRange = rotation ? 90f : 2f;
 
-
-            GUILayout.Label($"Input {label}");
+            GUILayout.Label($"<b>Input {label}</b>");
             GuiUtils.LabelValue(xLabel, input.x);
             GuiUtils.LabelValue(yLabel, input.y);
             GuiUtils.LabelValue(zLabel, input.z);
 
-            GUILayout.Label($"Output {label}");
+            GUILayout.Label($"<b>Output {label}</b>");
             GuiUtils.LabelValue(xLabel, output.x);
             GuiUtils.LabelValue(yLabel, output.y);
             GuiUtils.LabelValue(zLabel, output.z);
 
             GUILayout.Label($"<b>{label} Scale</b>");
-            GuiUtils.Slider(xLabel, ref settings.Scale.x, 0.0f, 5.0f);
-            GuiUtils.Slider(yLabel, ref settings.Scale.y, 0.0f, 5.0f);
-            GuiUtils.Slider(zLabel, ref settings.Scale.z, 0.0f, 5.0f);
+            GuiUtils.Slider(xLabel, ref settings.Scale.x, 0.0f, 5.0f, 1.0f);
+            GuiUtils.Slider(yLabel, ref settings.Scale.y, 0.0f, 5.0f, 1.0f);
+            GuiUtils.Slider(zLabel, ref settings.Scale.z, 0.0f, 5.0f, rotation ? 0.0f : 1.0f);
 
             GUILayout.Label($"<b>{label} Offset</b>");
-            GuiUtils.Slider(xLabel, ref settings.Offset.x, -offsetRange, offsetRange);
-            GuiUtils.Slider(yLabel, ref settings.Offset.y, -offsetRange, offsetRange);
-            GuiUtils.Slider(zLabel, ref settings.Offset.z, -offsetRange, offsetRange);
+            GuiUtils.Slider(xLabel, ref settings.Offset.x, -offsetRange, offsetRange, 0.0f);
+            GuiUtils.Slider(yLabel, ref settings.Offset.y, -offsetRange, offsetRange, 0.0f);
+            GuiUtils.Slider(zLabel, ref settings.Offset.z, -offsetRange, offsetRange, 0.0f);
 
             GUILayout.Label($"<b>{label} Limits</b>");
-            GuiUtils.Slider($"Min {xLabel}", ref settings.Min.x, -2 * offsetRange, 2 * offsetRange);
-            GuiUtils.Slider($"Max {xLabel}", ref settings.Max.x, -2 * offsetRange, 2 * offsetRange);
-            GuiUtils.Slider($"Min {yLabel}", ref settings.Min.y, -2 * offsetRange, 2 * offsetRange);
-            GuiUtils.Slider($"Max {yLabel}", ref settings.Max.y, -2 * offsetRange, 2 * offsetRange);
-            GuiUtils.Slider($"Min {zLabel}", ref settings.Min.z, -2 * offsetRange, 2 * offsetRange);
-            GuiUtils.Slider($"Max {zLabel}", ref settings.Max.z, -2 * offsetRange, 2 * offsetRange);
+            GuiUtils.Slider($"Min {xLabel}", ref settings.Min.x, -2 * offsetRange, 2 * offsetRange, rotation ? -90f : -0.2f);
+            GuiUtils.Slider($"Max {xLabel}", ref settings.Max.x, -2 * offsetRange, 2 * offsetRange, rotation ? 90f : 0.2f);
+            GuiUtils.Slider($"Min {yLabel}", ref settings.Min.y, -2 * offsetRange, 2 * offsetRange, rotation ? -135f : -0.2f);
+            GuiUtils.Slider($"Max {yLabel}", ref settings.Max.y, -2 * offsetRange, 2 * offsetRange, rotation ? 135f : 0.2f);
+            GuiUtils.Slider($"Min {zLabel}", ref settings.Min.z, -2 * offsetRange, 2 * offsetRange, rotation ? -90f : -0.2f);
+            GuiUtils.Slider($"Max {zLabel}", ref settings.Max.z, -2 * offsetRange, 2 * offsetRange, rotation ? 90f : 0.2f);
         }
 
-        private bool _showIvaGui = false;
-        
-
-        private bool _showFlightGui = false;
-
-        private bool _showMapGui = false;
-
-        private bool _showJoystickGui = false;
         private void JoystickGui()
         {
             string[] joysticks = Input.GetJoystickNames();
@@ -143,19 +181,27 @@ namespace KerbTrack
             // Joystick selection.
             if (joystickId >= joysticks.Length)
                 joystickId = 0;
-            GUILayout.Label("Active joystick");
-            GUILayout.Label(joystickId + " - " + joysticks[joystickId]);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Previous joystick"))
-                joystickId--;
-            if (GUILayout.Button("Next joystick"))
-                joystickId++;
-            GUILayout.EndHorizontal();
+            GUILayout.Label($"Active joystick: {joystickId} - {joysticks[joystickId]}");
+            if (joysticks.Length > 1)
+            {
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Previous joystick"))
+                    joystickId--;
+                if (GUILayout.Button("Next joystick"))
+                    joystickId++;
+                GUILayout.EndHorizontal();
+            }
+
             if (joystickId >= joysticks.Length)
                 joystickId = 0;
             if (joystickId < 0)
                 joystickId = joysticks.Length - 1;
             GUILayout.Space(10);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUILayout.Label("Invert axis");
+            GUILayout.EndHorizontal();
 
             SelectAxis(ref joyYawAxisId, ref joyYawInverted, "Yaw");
             SelectAxis(ref joyPitchAxisId, ref joyPitchInverted, "Pitch");
@@ -163,18 +209,20 @@ namespace KerbTrack
             SelectAxis(ref joyXAxisId, ref joyXInverted, "X");
             SelectAxis(ref joyYAxisId, ref joyYInverted, "Y");
             SelectAxis(ref joyZAxisId, ref joyZInverted, "Z");
-            SelectAxis(ref joyCamOrbitAxisId, ref joyCamOrbitInverted, "Flight Camera Orbit");
-            SelectAxis(ref joyCamPitchAxisId, ref joyCamPitchInverted, "Flight Camera Pitch");
+
+            GUILayout.Label("<b>Flight Camera</b>");
+            SelectAxis(ref joyCamOrbitAxisId, ref joyCamOrbitInverted, "Orbit");
+            SelectAxis(ref joyCamPitchAxisId, ref joyCamPitchInverted, "Pitch");
         }
 
         private void SelectAxis(ref int axisId, ref bool axisInverted, string axisName)
         {
             string label = axisId == -1 ? "Disabled" : axisId.ToString();
-            GuiUtils.LabelValue(axisName + " axis", label);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Previous " + axisName + " Axis"))
+            GuiUtils.LabelValue(axisName + " axis", label);
+            if (GUILayout.Button("Previous Axis"))
                 axisId--;
-            if (GUILayout.Button("Next " + axisName + " Axis"))
+            if (GUILayout.Button("Next Axis"))
                 axisId++;
             axisInverted = GUILayout.Toggle(axisInverted, "Inverted");
             GUILayout.EndHorizontal();
@@ -185,12 +233,8 @@ namespace KerbTrack
                 axisId = MaxAxisNum;
         }
 
-        private bool _showSettingsGui = false;
-        private void SettingsGui()
+        private void TrackerSettingsGui()
         {
-            mapTrackingEnabled = GUILayout.Toggle(mapTrackingEnabled, "Enabled in map view");
-            externalTrackingEnabled = GUILayout.Toggle(externalTrackingEnabled, "Enabled in external view");
-
             Trackers oldTracker = activeTracker;
             activeTracker = (Trackers)GuiUtils.RadioButton(trackerNames, (int)activeTracker);
             if (oldTracker != activeTracker)
@@ -202,7 +246,7 @@ namespace KerbTrack
                     GUILayout.Label("<b>FreeTrack</b>\r\nThis is used for FaceTrackNoIR. Freetrackclient.dll must be placed next to KSP.exe, and must be a 64-bit version if 64-bit KSP is used.");
                     break;*/
                 case Trackers.TrackIR:
-                    GUILayout.Label("<b>TrackIR</b>\r\nSupports TrackIR and other systems which emulate it, such as opentrack.\r\n" +
+                    GUILayout.Label("<b>TrackIR/opentrack</b>\r\nSupports TrackIR and other systems which emulate it, such as opentrack.\r\n" +
                         "<b>opentrack</b>\r\nWhen using opentrack, select the Input tracker appripriate to your hardware setup, and select \"freetrack 2.0 Enhanced\" as the Output.\r\n" +
                         "In the Output settings, ensure \"Use TrackIR\" or \"Enable both\" is selected.");
                     break;
@@ -214,9 +258,10 @@ namespace KerbTrack
                 case Trackers.Joystick:
                     GUILayout.Label("<b>Joystick</b>\r\nUse your joystick axes as input. Good for assigning to a spare axis on a joystick if you don't have a head tracker.\r\n" +
                         "If you have a head tracker that isn't supported, try setting it to output as a joystick and using this setting to receive it in KerbTrack.");
+                    JoystickGui();
                     break;
                 case Trackers.OpentrackUdp:
-                    GUILayout.Label("<b>Opentrack Udp</b>\r\n Supports opentrack's udp protocol, listening on port 4242.");
+                    GUILayout.Label("<b>Opentrack UDP</b>\r\nSupports opentrack's UDP protocol, listening on port 4242.");
                     break;
             }
         }

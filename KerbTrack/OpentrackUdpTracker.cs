@@ -90,7 +90,7 @@ class OpentrackUdpTracker : ITracker
             }
             catch(SocketException e)
             {
-                // TODO log it
+                Debug.LogException(e);
                 if(this.runThread)
                     System.Threading.Thread.Sleep(0); // `Yield` for dotnet 3.5
             }

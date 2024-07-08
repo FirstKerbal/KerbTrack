@@ -12,9 +12,12 @@
  * Heading: From above, rotating the craft anti-clockwise is positive, clockwise is negative.
  */
 
+using KSP.UI.Screens;
 using System;
+using System.IO;
 using System.Reflection;
 using UnityEngine;
+using static EdyCommonTools.RotationController;
 
 namespace KerbTrack
 {
@@ -72,6 +75,9 @@ namespace KerbTrack
         private string savePath = System.IO.Path.Combine(
             AssemblyLoader.loadedAssemblies.GetPathByType(typeof(KerbTrack)), "settings.cfg");
 
+        private static string _appImageFile = "KerbTrack/Images/kerbtrack";
+        private static ApplicationLauncherButton appButton = null;
+
         public static void ChangeTracker(Trackers t)
         {
             try
@@ -127,8 +133,8 @@ namespace KerbTrack
             Instance = this;
 
             Debug.Log("[KerbTrack] Starting");
-            GameEvents.onGamePause.Add(OnPause);
-            GameEvents.onGameUnpause.Add(OnUnPause);
+            GameEvents.onGUIApplicationLauncherReady.Add(OnAppLauncherReady);
+            GameEvents.onGUIApplicationLauncherDestroyed.Add(OnAppLauncherDestroyed);
             LoadSettings();
             ChangeTracker(activeTracker);
         }
@@ -137,31 +143,50 @@ namespace KerbTrack
         {
             Instance = null;
 
-            GameEvents.onGamePause.Remove(OnPause);
-            GameEvents.onGameUnpause.Remove(OnUnPause);
+            GameEvents.onGUIApplicationLauncherReady.Remove(OnAppLauncherReady);
+            GameEvents.onGUIApplicationLauncherDestroyed.Remove(OnAppLauncherDestroyed);
             SaveSettings();
         }
 
 #region GUI
-
-        public void OnPause()
-        {
-            guiVisible = true;
-        }
-
-        public void OnUnPause()
-        {
-            guiVisible = false;
-        }
 
         public void OnGUI()
         {
             OnGUI(GetInstanceID());
         }
 
-#endregion GUI
+        public void OnAppLauncherReady()
+        {
+            if (appButton == null)
+            {
+                appButton = ApplicationLauncher.Instance.AddModApplication(OnToolbarOpen, OnToolbarClose, null, null, null, null, ApplicationLauncher.AppScenes.ALWAYS,
+                    GameDatabase.Instance.GetTexture(_appImageFile, false));
+            }
+        }
 
-#region Persistence
+        public void OnAppLauncherDestroyed()
+        {
+            if (appButton != null)
+            {
+                OnToolbarClose();
+                ApplicationLauncher.Instance.RemoveApplication(appButton);
+            }
+        }
+
+        private void OnToolbarOpen()
+        {
+            guiVisible = true;
+        }
+
+        private void OnToolbarClose()
+        {
+            guiVisible = false;
+            SaveSettings();
+        }
+
+        #endregion GUI
+
+        #region Persistence
 
         public void SaveSettings()
         {
@@ -171,6 +196,12 @@ namespace KerbTrack
             node.name = "KERBTRACK_SETTINGS";
 
             ConfigNode.CreateConfigFromObject(this, node);
+
+            var saveDirectory = AssemblyLoader.loadedAssemblies.GetPathByType(typeof(KerbTrack));
+            if (!Directory.Exists(saveDirectory))
+            {
+                Directory.CreateDirectory(saveDirectory);
+            }
 
             node.Save(savePath);
         }
@@ -193,22 +224,35 @@ namespace KerbTrack
         [Persistent] public bool externalTrackingEnabled = true;
         [Persistent] public bool mapTrackingEnabled = true;
 
+        /* Use Xbox One controller for defaults.
+         * 0 = left stick left-right
+         * 1 = left stick up-down
+         * 2 = left and right triggers shared axis (left = -1, right = 1. Output is combined, i.e. both together = no output)
+         * 3 = right stick left-right
+         * 4 = right stick up-down
+         * 5 = D-pad left-right
+         * 6 = D-pad up-down
+         * 7 = ???
+         * 8 = left trigger
+         * 9 = right trigger
+         * 10 - 19 = ???
+         */
         [Persistent] public int joystickId = 0;
-        [Persistent] public int joyYawAxisId = 0;
-        [Persistent] public bool joyYawInverted = true;
-        [Persistent] public int joyPitchAxisId = 1;
-        [Persistent] public bool joyPitchInverted = true;
+        [Persistent] public int joyYawAxisId = 3; // Right stick left-right.
+        [Persistent] public bool joyYawInverted = false;
+        [Persistent] public int joyPitchAxisId = 4; // Right stick up-down.
+        [Persistent] public bool joyPitchInverted = false;
         [Persistent] public int joyRollAxisId = -1;
         [Persistent] public bool joyRollInverted = false;
-        [Persistent] public int joyXAxisId = 4;
+        [Persistent] public int joyXAxisId = 5;
         [Persistent] public bool joyXInverted = false;
-        [Persistent] public int joyYAxisId = 4;
-        [Persistent] public bool joyYInverted = true;
-        [Persistent] public int joyZAxisId = 2;
+        [Persistent] public int joyYAxisId = 6;
+        [Persistent] public bool joyYInverted = false;
+        [Persistent] public int joyZAxisId = -1;
         [Persistent] public bool joyZInverted = false;
-        [Persistent] public int joyCamPitchAxisId = -1;
+        [Persistent] public int joyCamPitchAxisId = 4;
         [Persistent] public bool joyCamPitchInverted = false;
-        [Persistent] public int joyCamOrbitAxisId = -1;
+        [Persistent] public int joyCamOrbitAxisId = 3;
         [Persistent] public bool joyCamOrbitInverted = false;
 
         [Persistent] public AdjustmentProfile IVA = new AdjustmentProfile();
@@ -322,6 +366,8 @@ namespace KerbTrack
                 {
                     FlightCamera.fetch.camPitch += -joyCamPos.x * Flight.Rotation.Scale.x * Time.deltaTime;
                     FlightCamera.fetch.camHdg += -joyCamPos.y * Flight.Rotation.Scale.y * Time.deltaTime;
+                    //FlightCamera.fetch.FieldOfView = Mathf.Clamp(FlightCamera.fetch.FieldOfView + joyCamPos.z * Flight.Rotation.Scale.z * Time.deltaTime, FlightCamera.fetch.fovMin, FlightCamera.fetch.fovMax);
+                    //FlightCamera.fetch.SetFoV(FlightCamera.fetch.FieldOfView);
                 }
                 else
                 {
@@ -359,8 +405,30 @@ namespace KerbTrack
         void ApplyMap()
         {
             if (!mapTrackingEnabled) return;
-            PlanetariumCamera.fetch.camPitch = OutputRotation.x;
-            PlanetariumCamera.fetch.camHdg = OutputRotation.y;
+
+            if (activeTracker == Trackers.Joystick)
+            {
+                Vector2 joyCamPos = new Vector3(0, 0);
+                ((JoystickTracker)tracker).GetFlightCamData(ref joyCamPos);
+                bool relative = true;
+                if (relative)
+                {
+                    PlanetariumCamera.fetch.camPitch += -joyCamPos.x * Flight.Rotation.Scale.x * Time.deltaTime;
+                    PlanetariumCamera.fetch.camHdg += -joyCamPos.y * Flight.Rotation.Scale.y * Time.deltaTime;
+                    //PlanetariumCamera.fetch.FieldOfView = Mathf.Clamp(FlightCamera.fetch.FieldOfView + 5f * Time.deltaTime, FlightCamera.fetch.fovMin, FlightCamera.fetch.fovMax);
+                    //PlanetariumCamera.fetch.SetFoV(FlightCamera.fetch.FieldOfView);
+                }
+                else
+                {
+                    PlanetariumCamera.fetch.camPitch = -joyCamPos.x * Flight.Rotation.Scale.x;
+                    PlanetariumCamera.fetch.camHdg = -joyCamPos.y * Flight.Rotation.Scale.y;
+                }
+            }
+            else
+            {
+                PlanetariumCamera.fetch.camPitch = OutputRotation.x / 10;
+                PlanetariumCamera.fetch.camHdg = OutputRotation.y / 10;
+            }
         }
 
         void ApplyKSC()

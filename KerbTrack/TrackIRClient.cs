@@ -14,7 +14,7 @@ namespace TrackIRUnity
         private TrackIRClient.dNP_QueryVersion NP_QueryVersion;
         private TrackIRClient.dNP_RequestData NP_RequestData;
         private TrackIRClient.dNP_GetData NP_GetData;
-        private TrackIRClient.dNP_UnregisterNotify NP_UnregisterNotify;
+        //private TrackIRClient.dNP_UnregisterNotify NP_UnregisterNotify;
         private TrackIRClient.dNP_StartCursor NP_StartCursor;
         private TrackIRClient.dNP_StopCursor NP_StopCursor;
         private TrackIRClient.dNP_ReCenter NP_ReCenter;
